@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Validador | SabanaPasajes{% endblock %}
+{% block content %}
+<section class="ruta-sabana-brand-header">
+  <img class="ruta-sabana-logo" src="{{ request.url_for('static', path='img/ruta-sabana-logo.png') }}" alt="RutaSabana - Movilidad Digital de la Sabana">
+</section>
+<section class="page-title"><p class="eyebrow">OPERACIÓN DE BUS</p><h1>Validador de pasajes</h1><p>Ingresa el código del pasaje o escanea el QR con un lector conectado al equipo.</p></section>
+<section class="card validator-card"><form method="post"><label>Código QR o código SAB<input name="code" value="{{ code }}" autofocus required placeholder="Pega el token o escanea el QR"></label><button class="button" type="submit">Validar y registrar</button></form></section>
+{% if result %}
+<section class="validation-result {% if result == 'VALIDO_USADO' %}valid{% else %}invalid{% endif %}">
+  {% if result == "VALIDO_USADO" %}<h2>✓ Pasaje válido: marcado como usado</h2>
+  {% elif result == "YA_UTILIZADO" %}<h2>⚠ Este pasaje ya fue utilizado</h2>
+  {% elif result == "ANULADO" %}<h2>✕ Pasaje anulado</h2>
+  {% else %}<h2>✕ Código no encontrado</h2>{% endif %}
+  {% if ticket %}<div class="result-data"><div><span>Ruta</span><strong>{{ ticket.schedule.route.origin }} → {{ ticket.schedule.route.destination }}</strong></div><div><span>Salida</span><strong>{{ ticket.schedule.departure_time }}</strong></div><div><span>Pasajero</span><strong>{{ ticket.passenger_name }}</strong></div><div><span>Código</span><strong>{{ ticket.ticket_code }}</strong></div></div>{% endif %}
+</section>{% endif %}
+{% endblock %}

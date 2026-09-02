@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pasajes Sabana{% endblock %}</title>
+  <link rel="stylesheet" href="{{ request.url_for('static', path='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ request.url_for('static', path='css/ruta-sabana-brand.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">Sabana<span>Pasajes</span></a>
+    <nav>
+      <a href="/">Comprar</a>
+      <a href="/validator">Validador</a>
+      <a href="/admin">Administración</a>
+    </nav>
+  </header>
+  <main class="container">{% block content %}{% endblock %}</main>
+  <footer>Proyecto académico · Pagos y rutas simulados · Sabana de Bogotá</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

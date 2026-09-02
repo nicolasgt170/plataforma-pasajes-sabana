@@ -1,0 +1,20 @@
+.hero-intro {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-intro .ruta-sabana-logo {
+  margin-bottom: 6px;
+}
+
+.hero-intro h1 {
+  margin: 0;
+}
+
+.hero-intro .eyebrow {
+  margin-top: 2px;
+}
+
+.hero-intro > p:last-child {
+  margin: 2px 0 0;
+}

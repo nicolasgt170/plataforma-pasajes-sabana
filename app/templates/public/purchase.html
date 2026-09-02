@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Compra de pasajes | SabanaPasajes{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ request.url_for('static', path='css/purchase.css') }}">{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-intro ruta-sabana-brand-header">
+    <img class="ruta-sabana-logo" src="{{ request.url_for('static', path='img/ruta-sabana-logo.png') }}" alt="RutaSabana - Movilidad Digital de la Sabana">
+    <p class="eyebrow">MOVILIDAD REGIONAL</p>
+    <h1>Tu viaje por la Sabana, <em>sin filas.</em></h1>
+    <p>Selecciona la ruta, la salida y completa una compra de demostración.</p>
+  </div>
+  <aside class="route-highlight"><strong>Ruta principal</strong><span>Tocancipá → Bogotá</span><small>Disponible junto con otras rutas de demostración.</small></aside>
+</section>
+<section class="card purchase-card">
+  <h2>Planifica tu viaje</h2>
+  <form method="post" action="/purchase" id="purchase-form">
+    <div class="grid two">
+      <label>Origen<select id="origin" name="origin" required>{% for city in cities %}<option value="{{ city }}" {% if city == default_origin %}selected{% endif %}>{{ city }}</option>{% endfor %}</select></label>
+      <label>Destino<select id="destination" name="destination" required>{% for city in cities %}<option value="{{ city }}" {% if city == default_destination %}selected{% endif %}>{{ city }}</option>{% endfor %}</select></label>
+    </div>
+    <div id="route-info" class="route-info">Cargando horarios…</div>
+    <div class="grid two">
+      <label>Horario de salida<select id="schedule_id" name="schedule_id" required></select></label>
+      <label>Cantidad de pasajes<select name="quantity"><option value="1">1 pasaje</option><option value="2">2 pasajes</option><option value="3">3 pasajes</option><option value="4">4 pasajes</option><option value="5">5 pasajes</option></select></label>
+    </div>
+    <hr>
+    <h3>Datos del pasajero</h3>
+    <div class="grid two">
+      <label>Nombre completo<input name="passenger_name" required maxlength="120" placeholder="Ej. Ana Rodríguez"></label>
+      <label>Documento<input name="passenger_document" required maxlength="50" placeholder="Ej. 1020304050"></label>
+    </div>
+    <label>Correo electrónico<input name="passenger_email" type="email" required maxlength="120" placeholder="ana@correo.com"></label>
+    <p class="notice">Al confirmar se registrará un pago con estado <strong>APROBADO_SIMULADO</strong>. No se realizan cobros reales.</p>
+    <button class="button" id="submit-button" type="submit">Confirmar pago simulado</button>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ request.url_for('static', path='js/purchase.js') }}"></script>{% endblock %}

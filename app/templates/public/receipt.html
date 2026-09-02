@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Pasaje emitido | SabanaPasajes{% endblock %}
+{% block content %}
+<section class="ruta-sabana-brand-header">
+  <img class="ruta-sabana-logo" src="{{ request.url_for('static', path='img/ruta-sabana-logo.png') }}" alt="RutaSabana - Movilidad Digital de la Sabana">
+</section>
+<section class="success-head"><p class="eyebrow">COMPRA CONFIRMADA</p><h1>¡Tus pasajes están listos!</h1><p>Pago <strong>{{ purchase.payment.status }}</strong> · Referencia {{ purchase.reference }}</p></section>
+<section class="summary card"><div><span>Total pagado (simulado)</span><strong>${{ "{:,.0f}".format(purchase.total_amount) }} COP</strong></div><div><span>Comprador</span><strong>{{ purchase.buyer_name }}</strong></div><div><span>Correo</span><strong>{{ purchase.buyer_email }}</strong></div></section>
+{% for item in tickets %}
+<article class="ticket">
+  <div class="ticket-main"><p class="eyebrow">PASAJES SABANA · {{ item.ticket.status }}</p><h2>{{ item.ticket.schedule.route.origin }} <span>→</span> {{ item.ticket.schedule.route.destination }}</h2>
+  <div class="ticket-details"><div><small>Salida</small><strong>{{ item.ticket.schedule.departure_time }}</strong></div><div><small>Vehículo</small><strong>{{ item.ticket.schedule.vehicle_label }}</strong></div><div><small>Pasajero</small><strong>{{ item.ticket.passenger_name }}</strong></div><div><small>Código</small><strong>{{ item.ticket.ticket_code }}</strong></div></div>
+  <p class="muted">Presenta este QR o código en el validador del bus.</p></div>
+  <div class="qr"><img src="{{ item.qr }}" alt="Código QR de {{ item.ticket.ticket_code }}"><code>{{ item.ticket.qr_token }}</code></div>
+</article>
+{% endfor %}
+<p><a class="button secondary" href="/validator">Ir al validador</a> <a class="text-link" href="/">Comprar otro pasaje</a></p>
+{% endblock %}

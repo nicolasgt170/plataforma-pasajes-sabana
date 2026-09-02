@@ -1,0 +1,34 @@
+.ruta-sabana-logo {
+  display: block;
+  width: min(100%, 390px);
+  height: auto;
+  max-height: 150px;
+  background: transparent;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.ruta-sabana-brand-header {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ruta-sabana-brand-header .ruta-sabana-logo {
+  margin-bottom: 6px;
+}
+
+.ruta-sabana-brand-header h1 {
+  margin: 0;
+}
+
+.ruta-sabana-brand-header .eyebrow {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .ruta-sabana-logo {
+    max-height: 125px;
+  }
+}
