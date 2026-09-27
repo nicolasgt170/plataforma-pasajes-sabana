@@ -1,5 +1,7 @@
 .env
+pasajes.db
 .venv/
+.venv_nuevo/
 __pycache__/
 *.py[cod]
 .pytest_cache/

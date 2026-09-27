@@ -39,3 +39,15 @@ Luego cambia `DATABASE_URL` en `.env` por la URL comentada de PostgreSQL incluid
 ```powershell
 docker compose up -d
 ```
+
+## Configuración y despliegue
+
+Usa `.env.example` como guía y conserva `.env` fuera de Git. Configura `DATABASE_URL`, `APP_BASE_URL`, `SESSION_SECRET`, `GOOGLE_MAPS_API_KEY` y las credenciales iniciales de administración. Google Maps es opcional para desarrollo, pero requiere una clave restringida para visualizar el mapa.
+
+Para Render, usa PostgreSQL mediante `DATABASE_URL`, define las variables de entorno en el panel de Render y utiliza el comando:
+
+```text
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+No uses `--reload` en producción. El desarrollo local funciona con HTTP; Render termina HTTPS/TLS en su proxy. El rastreo representa buses y paradas simulados, no GPS real.

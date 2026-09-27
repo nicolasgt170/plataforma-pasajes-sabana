@@ -3,7 +3,8 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import Route, TripSchedule
+from .models import AdminUser, Bus, Company, CompanyFare, Route, TripSchedule
+from .services.auth import hash_password
 
 CITIES = ["Zipaquirá", "Tenjo", "Sopó", "Tocancipá", "Bogotá"]
 
@@ -21,6 +22,13 @@ ROUTE_EXAMPLES = [
     ("Tenjo", "Sopó", "11500", 62),
 ]
 TIMES = ["06:00", "08:00", "12:00", "16:00", "18:00"]
+COMPANIES = [
+    ("Rápido del Carmen", "RÁPIDO", "#0b6e4f"), ("La Reina", "REINA", "#7c3aed"),
+    ("Gómez Villa", "GÓMEZ", "#b45309"), ("Río Negro", "RÍO", "#1d4ed8"),
+    ("Trans Libertadores", "LIBRE", "#be123c"), ("Cotranzipa", "COTRA", "#0369a1"),
+    ("Alianza", "ALIANZA", "#15803d"), ("Valle del Tenza", "TENZA", "#a16207"),
+    ("Águila", "ÁGUILA", "#4338ca"),
+]
 
 
 def seed_database(db: Session) -> None:
@@ -49,3 +57,51 @@ def seed_database(db: Session) -> None:
                 )
             existing.add((route_origin, route_destination))
     db.commit()
+
+    legacy_company = db.scalar(select(Company).where(Company.name == "Trans Libertador"))
+    if legacy_company and not db.scalar(select(Company).where(Company.name == "Trans Libertadores")):
+        legacy_company.name = "Trans Libertadores"
+        db.commit()
+    existing_companies = {company.name for company in db.scalars(select(Company)).all()}
+    for name, short_name, color in COMPANIES:
+        if name not in existing_companies:
+            db.add(Company(name=name, short_name=short_name, marker_color=color))
+    db.commit()
+
+    # Las tarifas son una simulación y varían ligeramente por empresa y trayecto.
+    companies = db.scalars(select(Company).order_by(Company.id)).all()
+    for route in db.scalars(select(Route)).all():
+        for index, company in enumerate(companies):
+            if not db.scalar(select(CompanyFare.id).where(CompanyFare.company_id == company.id, CompanyFare.route_id == route.id)):
+                variation = Decimal((index - 4) * 150)
+                db.add(CompanyFare(company_id=company.id, route_id=route.id, fare=max(Decimal("5000"), route.base_fare + variation)))
+    db.commit()
+
+    if not db.scalar(select(Bus.id)):
+        routes = db.scalars(select(Route).limit(6)).all()
+        for index, route in enumerate(routes, start=1):
+            company = companies[(index - 1) % len(companies)]
+            db.add(Bus(bus_code=f"BUS-{index:03d}", company_id=company.id, simulated_plate=f"SIM{index:03d}", route_label=f"{route.origin} → {route.destination}", status="En ruta"))
+        db.commit()
+
+    # Solo migra el antiguo usuario de demostración una vez; no restablece
+    # contraseñas ni bloqueos en inicios posteriores.
+    import os
+    username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
+    password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
+    if username and password and password != "change-this-before-running":
+        configured_user = db.scalar(select(AdminUser).where(AdminUser.username == username))
+        legacy_user = db.scalar(select(AdminUser).where(AdminUser.username == "admin"))
+        if legacy_user and not configured_user:
+            legacy_user.username = username
+            legacy_user.password_hash = hash_password(password)
+            legacy_user.failed_attempts = 0
+            legacy_user.locked_until = None
+            db.commit()
+        elif not configured_user:
+            db.add(AdminUser(username=username, password_hash=hash_password(password)))
+            db.commit()
+        elif legacy_user and legacy_user.id != configured_user.id:
+            # Evita conservar el usuario legado duplicado cuando ya existe el configurado.
+            db.delete(legacy_user)
+            db.commit()

@@ -21,6 +21,7 @@
     <div id="route-info" class="route-info">Cargando horarios…</div>
     <div class="grid two">
       <label>Horario de salida<select id="schedule_id" name="schedule_id" required></select></label>
+      <label>Empresa<select id="company_id" name="company_id" required></select></label>
       <label>Cantidad de pasajes<select name="quantity"><option value="1">1 pasaje</option><option value="2">2 pasajes</option><option value="3">3 pasajes</option><option value="4">4 pasajes</option><option value="5">5 pasajes</option></select></label>
     </div>
     <hr>
@@ -30,7 +31,7 @@
       <label>Documento<input name="passenger_document" required maxlength="50" placeholder="Ej. 1020304050"></label>
     </div>
     <label>Correo electrónico<input name="passenger_email" type="email" required maxlength="120" placeholder="ana@correo.com"></label>
-    <p class="notice">Al confirmar se registrará un pago con estado <strong>APROBADO_SIMULADO</strong>. No se realizan cobros reales.</p>
+    <p class="notice">Pago simulado. No se realiza ningún cobro real. El precio se calcula en el servidor según empresa y ruta.</p>
     <button class="button" id="submit-button" type="submit">Confirmar pago simulado</button>
   </form>
 </section>

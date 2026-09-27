@@ -7,7 +7,8 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from ..models import Purchase, SimulatedPayment, Ticket, TripSchedule, Validation
+from ..models import CompanyFare, Purchase, SimulatedPayment, Ticket, TripSchedule, Validation
+from .validation import clean_document, clean_email, clean_name, clean_qr
 
 
 def new_reference(prefix: str) -> str:
@@ -15,7 +16,7 @@ def new_reference(prefix: str) -> str:
 
 
 def create_purchase(
-    db: Session, schedule_id: int, name: str, document: str, email: str, quantity: int
+    db: Session, schedule_id: int, company_id: int, name: str, document: str, email: str, quantity: int
 ) -> Purchase:
     schedule = db.scalar(
         select(TripSchedule).options(joinedload(TripSchedule.route)).where(TripSchedule.id == schedule_id, TripSchedule.active.is_(True))
@@ -24,11 +25,15 @@ def create_purchase(
         raise HTTPException(status_code=404, detail="El horario seleccionado no está disponible.")
     if quantity < 1 or quantity > 5:
         raise HTTPException(status_code=400, detail="La cantidad permitida es de 1 a 5 pasajes.")
+    name, document, email = clean_name(name, "El nombre completo"), clean_document(document), clean_email(email)
+    fare = db.scalar(select(CompanyFare).where(CompanyFare.company_id == company_id, CompanyFare.route_id == schedule.route_id))
+    if not fare:
+        raise HTTPException(status_code=400, detail="La empresa seleccionada no opera esta ruta.")
 
-    total = schedule.route.base_fare * quantity
+    total = fare.fare * quantity
     purchase = Purchase(
         reference=new_reference("COMPRA"), buyer_name=name, buyer_document=document,
-        buyer_email=email, total_amount=total, status="CONFIRMADA"
+        buyer_email=email, company_id=company_id, total_amount=total, status="CONFIRMADA"
     )
     db.add(purchase)
     db.flush()
@@ -45,14 +50,14 @@ def create_purchase(
     db.commit()
     return db.execute(
         select(Purchase).options(
-            joinedload(Purchase.payment),
+            joinedload(Purchase.payment), joinedload(Purchase.company),
             joinedload(Purchase.tickets).joinedload(Ticket.schedule).joinedload(TripSchedule.route),
         ).where(Purchase.id == purchase.id)
     ).unique().scalar_one()
 
 
 def validate_ticket(db: Session, raw_code: str) -> tuple[str, Ticket | None]:
-    code = raw_code.strip()
+    code = clean_qr(raw_code)
     # A hardware scanner may return the QR URL; extract its token too.
     if "code=" in code:
         code = code.split("code=", 1)[1].split("&", 1)[0]
