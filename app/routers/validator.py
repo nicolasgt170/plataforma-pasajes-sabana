@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..services.tickets import validate_ticket
 
-router = APIRouter(prefix="/validator")
+router = APIRouter(prefix="/validator") 
 
 
-@router.get("", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse) #Página_de_validación
 def validator_page(request: Request, code: str = ""):
     return request.app.state.templates.TemplateResponse(
         request=request,
@@ -17,7 +17,7 @@ def validator_page(request: Request, code: str = ""):
     )
 
 
-@router.post("", response_class=HTMLResponse)
+@router.post("", response_class=HTMLResponse) #Validación_de_ticket
 def validate(request: Request, code: str = Form(...), db: Session = Depends(get_db)):
     result, ticket = validate_ticket(db, code)
     return request.app.state.templates.TemplateResponse(
