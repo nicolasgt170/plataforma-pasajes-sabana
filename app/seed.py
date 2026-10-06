@@ -91,7 +91,7 @@ def seed_database(db: Session) -> None:
     password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
     force_reset = os.getenv("ADMIN_FORCE_RESET", "").strip().lower() == "true"
 
-        if username and password and password != "change-this-before-running":
+    if username and password and password != "change-this-before-running":
         configured_user = db.scalar(
             select(AdminUser).where(AdminUser.username == username)
         )
