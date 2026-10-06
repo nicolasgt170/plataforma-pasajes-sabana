@@ -33,7 +33,7 @@ COMPANIES = [
 
 def seed_database(db: Session) -> None:
     """Completa los datos de demostración sin duplicarlos."""
-    print("SEED_DATABASE: INICIO")
+    
     existing = {(route.origin, route.destination) for route in db.scalars(select(Route)).all()}
     for origin, destination, fare, duration in ROUTE_EXAMPLES:
         for route_origin, route_destination in ((origin, destination), (destination, origin)):
@@ -85,20 +85,11 @@ def seed_database(db: Session) -> None:
             db.add(Bus(bus_code=f"BUS-{index:03d}", company_id=company.id, simulated_plate=f"SIM{index:03d}", route_label=f"{route.origin} → {route.destination}", status="En ruta"))
         db.commit()
 
-            # Inicialización y recuperación del usuario administrador.
+       # Inicialización del usuario administrador.
     import os
 
     username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
     password = os.getenv("TEST_ADMIN_PASSWORD", "")
-    force_reset = os.getenv("ADMIN_FORCE_RESET", "").strip().lower() == "true"
-
-    print(
-        "ADMIN_ENV: "
-        f"username_presente={bool(username)}, "
-        f"password_presente={bool(password)}, "
-        f"force_reset={force_reset}, "
-        f"password_placeholder={password == 'change-this-before-running'}"
-    )
 
     if username and password and password != "change-this-before-running":
         configured_user = db.scalar(
@@ -109,50 +100,14 @@ def seed_database(db: Session) -> None:
             select(AdminUser).where(AdminUser.username == "admin")
         )
 
-        print(
-            f"ADMIN_DIAGNOSTIC: username_configurado={username!r}, "
-            f"force_reset={force_reset}"
-        )
-
-        if configured_user:
-            print(
-                f"ADMIN_DIAGNOSTIC: usuario encontrado={configured_user.username!r}, "
-                f"failed_attempts={configured_user.failed_attempts}, "
-                f"locked_until={configured_user.locked_until}"
-            )
-
-            if force_reset:
-                configured_user.password_hash = hash_password(password)
-                configured_user.failed_attempts = 0
-                configured_user.locked_until = None
-                db.commit()
-
-                print(
-                    "ADMIN_DIAGNOSTIC: contraseña restablecida"
-                )
-
-        elif legacy_user:
-            print(
-                f"ADMIN_DIAGNOSTIC: usuario legado encontrado="
-                f"{legacy_user.username!r}; se migrará"
-            )
-
+        if legacy_user and not configured_user:
             legacy_user.username = username
             legacy_user.password_hash = hash_password(password)
             legacy_user.failed_attempts = 0
             legacy_user.locked_until = None
             db.commit()
 
-            print(
-                f"ADMIN_DIAGNOSTIC: usuario migrado a {username!r}"
-            )
-
-        else:
-            print(
-                "ADMIN_DIAGNOSTIC: no existe usuario configurado ni usuario legado; "
-                "se creará uno nuevo"
-            )
-
+        elif not configured_user:
             db.add(
                 AdminUser(
                     username=username,
@@ -161,26 +116,6 @@ def seed_database(db: Session) -> None:
             )
             db.commit()
 
-            print(
-                f"ADMIN_DIAGNOSTIC: usuario {username!r} creado"
-            )
-
-        # Diagnóstico final de los usuarios administradores.
-        all_admins = db.scalars(
-            select(AdminUser).order_by(AdminUser.id)
-        ).all()
-
-        print(
-            "ADMIN_DIAGNOSTIC: administradores en BD="
-            + repr(
-                [
-                    {
-                        "id": user.id,
-                        "username": user.username,
-                        "failed_attempts": user.failed_attempts,
-                        "locked": user.locked_until is not None,
-                    }
-                    for user in all_admins
-                ]
-            )
-        )
+        elif legacy_user and legacy_user.id != configured_user.id:
+            db.delete(legacy_user)
+            db.commit()
