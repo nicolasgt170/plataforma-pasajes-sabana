@@ -89,9 +89,9 @@ def seed_database(db: Session) -> None:
     import os
 
     username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
-    password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
+    password = os.getenv("TEST_ADMIN_PASSWORD", "")
     force_reset = os.getenv("ADMIN_FORCE_RESET", "").strip().lower() == "true"
-    
+
     print(
         "ADMIN_ENV: "
         f"username_presente={bool(username)}, "
