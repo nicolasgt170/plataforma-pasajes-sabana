@@ -84,7 +84,7 @@ def seed_database(db: Session) -> None:
             db.add(Bus(bus_code=f"BUS-{index:03d}", company_id=company.id, simulated_plate=f"SIM{index:03d}", route_label=f"{route.origin} → {route.destination}", status="En ruta"))
         db.commit()
 
-        # Inicialización y recuperación del usuario administrador.
+            # Inicialización y recuperación del usuario administrador.
     import os
 
     username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
@@ -101,12 +101,22 @@ def seed_database(db: Session) -> None:
         )
 
         if configured_user:
+            print(
+                f"ADMIN_RESET: usuario encontrado={configured_user.username!r}, "
+                f"force_reset={force_reset}, "
+                f"bloqueado={configured_user.locked_until is not None}"
+            )
+
             # Restablecimiento temporal solicitado mediante Render.
             if force_reset:
                 configured_user.password_hash = hash_password(password)
                 configured_user.failed_attempts = 0
                 configured_user.locked_until = None
                 db.commit()
+
+                print(
+                    "ADMIN_RESET: contraseña y bloqueo restablecidos correctamente"
+                )
 
         elif legacy_user:
             # Migra el antiguo usuario de demostración.
