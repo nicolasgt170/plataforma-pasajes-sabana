@@ -33,6 +33,7 @@ COMPANIES = [
 
 def seed_database(db: Session) -> None:
     """Completa los datos de demostración sin duplicarlos."""
+    print("SEED_DATABASE: INICIO")
     existing = {(route.origin, route.destination) for route in db.scalars(select(Route)).all()}
     for origin, destination, fare, duration in ROUTE_EXAMPLES:
         for route_origin, route_destination in ((origin, destination), (destination, origin)):
