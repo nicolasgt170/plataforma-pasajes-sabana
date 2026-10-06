@@ -15,6 +15,9 @@ LOCKOUT_MINUTES = 15
 def hash_password(password: str) -> str:
     return password_hasher.hash(password)
 
+def verify_password(password: str, password_hash: str) -> bool:
+    return password_hasher.verify(password, password_hash)
+
 
 def authenticate_admin(db: Session, username: str, password: str) -> AdminUser | None:
     """Registra cada intento; no revela si el usuario existe ni registra contraseñas."""
