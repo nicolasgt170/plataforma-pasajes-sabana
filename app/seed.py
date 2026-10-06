@@ -88,9 +88,6 @@ def seed_database(db: Session) -> None:
        # Inicialización del usuario administrador.
     import os
 
-        # Inicialización del usuario administrador.
-    import os
-
     username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
     password = os.getenv("TEST_ADMIN_PASSWORD", "")
 
@@ -117,12 +114,6 @@ def seed_database(db: Session) -> None:
                     password_hash=hash_password(password),
                 )
             )
-            db.commit()
-
-        elif os.getenv("ADMIN_FORCE_RESET") == "1":
-            configured_user.password_hash = hash_password(password)
-            configured_user.failed_attempts = 0
-            configured_user.locked_until = None
             db.commit()
 
         elif legacy_user and legacy_user.id != configured_user.id:
