@@ -91,7 +91,7 @@ def seed_database(db: Session) -> None:
     password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
     force_reset = os.getenv("ADMIN_FORCE_RESET", "").strip().lower() == "true"
 
-    if username and password and password != "change-this-before-running":
+        if username and password and password != "change-this-before-running":
         configured_user = db.scalar(
             select(AdminUser).where(AdminUser.username == username)
         )
@@ -100,14 +100,18 @@ def seed_database(db: Session) -> None:
             select(AdminUser).where(AdminUser.username == "admin")
         )
 
+        print(
+            f"ADMIN_DIAGNOSTIC: username_configurado={username!r}, "
+            f"force_reset={force_reset}"
+        )
+
         if configured_user:
             print(
-                f"ADMIN_RESET: usuario encontrado={configured_user.username!r}, "
-                f"force_reset={force_reset}, "
-                f"bloqueado={configured_user.locked_until is not None}"
+                f"ADMIN_DIAGNOSTIC: usuario encontrado={configured_user.username!r}, "
+                f"failed_attempts={configured_user.failed_attempts}, "
+                f"locked_until={configured_user.locked_until}"
             )
 
-            # Restablecimiento temporal solicitado mediante Render.
             if force_reset:
                 configured_user.password_hash = hash_password(password)
                 configured_user.failed_attempts = 0
@@ -115,19 +119,31 @@ def seed_database(db: Session) -> None:
                 db.commit()
 
                 print(
-                    "ADMIN_RESET: contraseña y bloqueo restablecidos correctamente"
+                    "ADMIN_DIAGNOSTIC: contraseña restablecida"
                 )
 
         elif legacy_user:
-            # Migra el antiguo usuario de demostración.
+            print(
+                f"ADMIN_DIAGNOSTIC: usuario legado encontrado="
+                f"{legacy_user.username!r}; se migrará"
+            )
+
             legacy_user.username = username
             legacy_user.password_hash = hash_password(password)
             legacy_user.failed_attempts = 0
             legacy_user.locked_until = None
             db.commit()
 
+            print(
+                f"ADMIN_DIAGNOSTIC: usuario migrado a {username!r}"
+            )
+
         else:
-            # Crea el administrador inicial.
+            print(
+                "ADMIN_DIAGNOSTIC: no existe usuario configurado ni usuario legado; "
+                "se creará uno nuevo"
+            )
+
             db.add(
                 AdminUser(
                     username=username,
@@ -135,3 +151,27 @@ def seed_database(db: Session) -> None:
                 )
             )
             db.commit()
+
+            print(
+                f"ADMIN_DIAGNOSTIC: usuario {username!r} creado"
+            )
+
+        # Diagnóstico final de los usuarios administradores.
+        all_admins = db.scalars(
+            select(AdminUser).order_by(AdminUser.id)
+        ).all()
+
+        print(
+            "ADMIN_DIAGNOSTIC: administradores en BD="
+            + repr(
+                [
+                    {
+                        "id": user.id,
+                        "username": user.username,
+                        "failed_attempts": user.failed_attempts,
+                        "locked": user.locked_until is not None,
+                    }
+                    for user in all_admins
+                ]
+            )
+        )
