@@ -84,24 +84,44 @@ def seed_database(db: Session) -> None:
             db.add(Bus(bus_code=f"BUS-{index:03d}", company_id=company.id, simulated_plate=f"SIM{index:03d}", route_label=f"{route.origin} → {route.destination}", status="En ruta"))
         db.commit()
 
-    # Solo migra el antiguo usuario de demostración una vez; no restablece
-    # contraseñas ni bloqueos en inicios posteriores.
+        # Inicialización y recuperación del usuario administrador.
     import os
+
     username = os.getenv("ADMIN_INITIAL_USERNAME", "").strip()
     password = os.getenv("ADMIN_INITIAL_PASSWORD", "")
+    force_reset = os.getenv("ADMIN_FORCE_RESET", "").strip().lower() == "true"
+
     if username and password and password != "change-this-before-running":
-        configured_user = db.scalar(select(AdminUser).where(AdminUser.username == username))
-        legacy_user = db.scalar(select(AdminUser).where(AdminUser.username == "admin"))
-        if legacy_user and not configured_user:
+        configured_user = db.scalar(
+            select(AdminUser).where(AdminUser.username == username)
+        )
+
+        legacy_user = db.scalar(
+            select(AdminUser).where(AdminUser.username == "admin")
+        )
+
+        if configured_user:
+            # Restablecimiento temporal solicitado mediante Render.
+            if force_reset:
+                configured_user.password_hash = hash_password(password)
+                configured_user.failed_attempts = 0
+                configured_user.locked_until = None
+                db.commit()
+
+        elif legacy_user:
+            # Migra el antiguo usuario de demostración.
             legacy_user.username = username
             legacy_user.password_hash = hash_password(password)
             legacy_user.failed_attempts = 0
             legacy_user.locked_until = None
             db.commit()
-        elif not configured_user:
-            db.add(AdminUser(username=username, password_hash=hash_password(password)))
-            db.commit()
-        elif legacy_user and legacy_user.id != configured_user.id:
-            # Evita conservar el usuario legado duplicado cuando ya existe el configurado.
-            db.delete(legacy_user)
+
+        else:
+            # Crea el administrador inicial.
+            db.add(
+                AdminUser(
+                    username=username,
+                    password_hash=hash_password(password),
+                )
+            )
             db.commit()
