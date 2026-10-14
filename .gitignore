@@ -1,7 +1,13 @@
 .env
 pasajes.db
 .venv/
+.venv312/
 .venv_nuevo/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Archivos locales de pruebas y respaldos
+pasajes_pruebas.db
+pasajes_pruebas_backup.db
+app/seed.py.backup

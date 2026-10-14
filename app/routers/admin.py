@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from ..database import get_db
 from ..models import AdminUser, Bus, Company, SimulatedPayment, Ticket, TripSchedule, Validation
 from ..services.auth import authenticate_admin, hash_password, verify_password
+from ..services.reports import sales_report
 from ..services.validation import USERNAME_RE
 
 router = APIRouter(prefix="/admin")
@@ -136,7 +137,7 @@ def logout(request: Request):
 
 
 @router.get("", response_class=HTMLResponse)
-def dashboard(request: Request, db: Session = Depends(get_db)):
+def dashboard(request: Request, company_id: str | None = Query(default=None), db: Session = Depends(get_db)):
     if not logged_in(request):
         return RedirectResponse("/admin/login", 303)
 
@@ -180,6 +181,34 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         ) or 0,
     }
 
+    reports = sales_report(db)
+    company_options = db.scalars(select(Company).order_by(Company.name)).all()
+    selected_company_id = None
+    if company_id and company_id.strip():
+        try:
+            parsed_company_id = int(company_id)
+            if parsed_company_id > 0:
+                selected_company_id = parsed_company_id
+        except ValueError:
+            # Un valor manipulado o inválido no debe romper el panel.
+            selected_company_id = None
+    selected_report = next(
+        (row for row in reports["companies"] if row["id"] == selected_company_id),
+        None,
+    )
+    if selected_report is None and selected_company_id is not None:
+        selected_company = next(
+            (company for company in company_options if company.id == selected_company_id),
+            None,
+        )
+        if selected_company:
+            selected_report = {
+                "id": selected_company.id,
+                "name": selected_company.name,
+                "revenue": 0,
+                "purchases": 0,
+                "tickets": 0,
+            }
     return request.app.state.templates.TemplateResponse(
         request=request,
         name="admin/dashboard.html",
@@ -191,8 +220,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "buses": db.scalars(
                 select(Bus).options(joinedload(Bus.company))
             ).all(),
-            "companies": db.scalars(
-                select(Company).order_by(Company.name)
-            ).all(),
+            "companies": company_options,
+            "sales_report": reports,
+            "selected_company_report": selected_report,
+            "selected_company_id": selected_company_id,
         },
     )

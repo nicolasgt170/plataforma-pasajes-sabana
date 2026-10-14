@@ -9,6 +9,6 @@ qrcode[pil]>=8.0,<9.0
 python-dotenv>=1.0,<2.0
 pwdlib[argon2]>=0.2,<1.0
 itsdangerous>=2.2,<3.0
+psycopg[binary]>=3.2,<4.0
 
-# Para usar PostgreSQL en el futuro, instalar adicionalmente:
-# pip install "psycopg[binary]>=3.2,<4.0"
+# psycopg permite usar DATABASE_URL de PostgreSQL en Render.

@@ -21,6 +21,30 @@
     </div>
 </section>
 
+<section class="card table-card">
+    <h2>Reportes de ventas</h2>
+    <p class="notice">Importes de pagos simulados aprobados; no representan dinero real.</p>
+    <section class="stats">
+        <div><span>Recaudación global</span><strong>${{ "{:,.0f}".format(sales_report.global.revenue) }} COP</strong></div>
+        <div><span>Tickets vendidos</span><strong>{{ sales_report.global.tickets }}</strong></div>
+        <div><span>Compras registradas</span><strong>{{ sales_report.global.purchases }}</strong></div>
+        <div><span>Empresas con ventas</span><strong>{{ sales_report.global.companies_with_sales }}</strong></div>
+    </section>
+    <form method="get" action="/admin">
+        <label>Filtrar por empresa
+            <select name="company_id" onchange="this.form.submit()">
+                <option value="">Todas las empresas</option>
+                {% for company in companies %}<option value="{{ company.id }}" {% if company.id == selected_company_id %}selected{% endif %}>{{ company.name }}</option>{% endfor %}
+            </select>
+        </label>
+    </form>
+    {% if selected_company_report %}
+        <p><strong>{{ selected_company_report.name }}</strong>: ${{ "{:,.0f}".format(selected_company_report.revenue) }} COP · {{ selected_company_report.tickets }} tiquetes · {{ selected_company_report.purchases }} compras{% if sales_report.global.revenue %} · {{ "{:.1f}".format(selected_company_report.revenue * 100 / sales_report.global.revenue) }}% de la recaudación{% endif %}</p>
+    {% endif %}
+    <div class="table-wrap"><table><thead><tr><th>Empresa</th><th>Recaudación simulada</th><th>Tiquetes</th><th>Compras</th><th>Participación</th></tr></thead><tbody>{% for row in sales_report.companies %}<tr><td>{{ row.name }}</td><td>${{ "{:,.0f}".format(row.revenue) }} COP</td><td>{{ row.tickets }}</td><td>{{ row.purchases }}</td><td>{% if sales_report.global.revenue %}{{ "{:.1f}".format(row.revenue * 100 / sales_report.global.revenue) }}%{% else %}0.0%{% endif %}</td></tr>{% else %}<tr><td colspan="5">No hay pagos simulados aprobados.</td></tr>{% endfor %}</tbody></table></div>
+    {% if sales_report.global.unassigned_revenue %}<p class="muted">Sin empresa asignada: ${{ "{:,.0f}".format(sales_report.global.unassigned_revenue) }} COP; no se atribuye a ninguna empresa.</p>{% endif %}
+</section>
+
 <section class="stats">
     <div>
         <span>Pasajes emitidos</span>
