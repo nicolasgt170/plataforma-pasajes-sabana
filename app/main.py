@@ -22,8 +22,10 @@ async def lifespan(app: FastAPI):
     if "purchases" in inspector.get_table_names() and "company_id" not in {column["name"] for column in inspector.get_columns("purchases")}:
         with engine.begin() as connection:
             connection.execute(text("ALTER TABLE purchases ADD COLUMN company_id INTEGER"))
-    with SessionLocal() as db:
-        seed_database(db)
+    # During a controlled data migration, schema creation must not add demo rows.
+    if os.getenv("RUN_SEED_ON_STARTUP", "true").strip().lower() in {"1", "true", "yes", "on"}:
+        with SessionLocal() as db:
+            seed_database(db)
     yield
 
 

@@ -3,6 +3,8 @@ pasajes.db
 .venv/
 .venv312/
 .venv_nuevo/
+.venv_migracion/
+.venv_migracion312/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -10,4 +12,8 @@ __pycache__/
 # Archivos locales de pruebas y respaldos
 pasajes_pruebas.db
 pasajes_pruebas_backup.db
+pasajes_pre_migracion_backup.db
+pasajes_migracion_*.db
 app/seed.py.backup
+
+.venv_migracion312_reparado/
